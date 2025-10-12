@@ -37,7 +37,7 @@ export default function CreateBudgetPage() {
     try {
       await createBudget(formData);
       router.push("/budgets");
-    } catch (err) {
+    } catch {
       
     }
   };

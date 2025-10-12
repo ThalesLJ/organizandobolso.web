@@ -1,7 +1,5 @@
 import { User } from '@/types';
 
-const JWT_SECRET = process.env.NEXT_PUBLIC_JWT_SECRET || 'your-secret-key';
-
 export interface JwtPayload {
   sub: string;
   username: string;
