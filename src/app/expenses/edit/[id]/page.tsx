@@ -1,31 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
-
-interface Expense {
-  id: number;
-  categoryId: number;
-  name: string;
-  amount: number;
-  description: string;
-  color: string;
-}
-
-interface Budget {
-  id: number;
-  category: string;
-  name: string;
-  icon: string;
-  monthlyBudget: number;
-  color: string;
-}
+import { Budget, Expense } from '@/types';
+import { budgetService } from '@/services/budgetService';
+import { expenseService } from '@/services/expenseService';
 
 export default function EditExpensePage() {
   const router = useRouter();
   const params = useParams();
-  const expenseId = parseInt(params.id as string);
+  const expenseId = params.id as string;
 
   const [expense, setExpense] = useState<Expense | null>(null);
   const [budgets, setBudgets] = useState<Budget[]>([]);
@@ -33,64 +18,52 @@ export default function EditExpensePage() {
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
-    categoryId: 0,
+    categoryId: "",
     amount: 0,
     description: ""
   });
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
-      const [expensesResponse, budgetsResponse] = await Promise.all([
-        fetch('/data/expenses.json'),
-        fetch('/data/budgets.json')
+      const [expenseData, budgetsData] = await Promise.all([
+        expenseService.getById(expenseId),
+        budgetService.getAll()
       ]);
+      setExpense(expenseData);
+      setFormData({
+        name: expenseData.name,
+        categoryId: expenseData.budgetId,
+        amount: expenseData.amount,
+        description: expenseData.description || ""
+      });
+      setBudgets(budgetsData);
+    } catch {
       
-      const expensesData = await expensesResponse.json();
-      const budgetsData = await budgetsResponse.json();
-      
-      const foundExpense = expensesData.expenses.find((e: Expense) => e.id === expenseId);
-      
-      if (foundExpense) {
-        setExpense(foundExpense);
-        setFormData({
-          name: foundExpense.name,
-          categoryId: foundExpense.categoryId,
-          amount: foundExpense.amount,
-          description: foundExpense.description || ""
-        });
-      } else {
-        router.push('/expenses');
-      }
-      
-      setBudgets(budgetsData.budgets);
-    } catch (error) {
-      console.error('Error fetching data:', error);
       router.push('/expenses');
     } finally {
       setLoading(false);
     }
-  };
+  }, [expenseId, router]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
 
     try {
-      // Como não há API implementada, vamos simular a atualização
-      // Em um projeto real, aqui seria feita a chamada para a API
-      console.log('Updating expense:', expenseId, formData);
-      
-      // Simular delay de salvamento
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Redirecionar de volta para a lista de expenses
+      await expenseService.update(expenseId, {
+        budgetId: formData.categoryId,
+        name: formData.name,
+        amount: formData.amount,
+        description: formData.description,
+        color: expense?.color || '#8b5cf6',
+      });
       router.push('/expenses');
-    } catch (error) {
-      console.error('Error updating expense:', error);
+    } catch {
+      
     } finally {
       setSaving(false);
     }
@@ -104,7 +77,7 @@ export default function EditExpensePage() {
     }));
   };
 
-  const handleCategoryChange = (categoryId: number) => {
+  const handleCategoryChange = (categoryId: string) => {
     setFormData(prev => ({ ...prev, categoryId }));
   };
 
@@ -143,7 +116,6 @@ export default function EditExpensePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-black">
-      {/* Header */}
       <div className="border-b border-white/10 bg-white/5 backdrop-blur-xl">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
@@ -153,6 +125,7 @@ export default function EditExpensePage() {
             </div>
             <Link
               href="/expenses"
+              prefetch={false}
               className="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-300 select-none"
             >
               Back to Expenses
@@ -161,9 +134,7 @@ export default function EditExpensePage() {
         </div>
       </div>
 
-      {/* Main Content */}
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-
         <div className="backdrop-blur-xl bg-white/5 rounded-2xl p-8 border border-white/10 shadow-xl">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -238,7 +209,6 @@ export default function EditExpensePage() {
                       </div>
                       <div>
                         <div className="font-medium text-white select-none">{budget.name}</div>
-                        <div className="text-sm text-slate-400 select-none">{budget.category}</div>
                       </div>
                     </div>
                   </button>

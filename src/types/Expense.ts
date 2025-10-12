@@ -1,8 +1,10 @@
 export interface Expense {
-  id: number;
-  categoryId: number;
+  id: string;
+  budgetId: string;
   name: string;
   amount: number;
   description: string;
   color: string;
+  createdAt: string;
+  updatedAt: string;
 }

@@ -3,29 +3,24 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { budgetService } from '@/services/budgetService';
+import { Budget } from '@/types';
+import { expenseService } from '@/services/expenseService';
 
 interface ExpenseForm {
-  categoryId: number;
+  categoryId: string;
   name: string;
   amount: number;
   description: string;
   color: string;
 }
 
-interface Budget {
-  id: number;
-  category: string;
-  name: string;
-  icon: string;
-  monthlyBudget: number;
-  color: string;
-}
-
 export default function CreateExpensePage() {
   const router = useRouter();
   const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [saving, setSaving] = useState(false);
   const [formData, setExpenseForm] = useState<ExpenseForm>({
-    categoryId: 0,
+    categoryId: "",
     name: "",
     amount: 0,
     description: "",
@@ -38,26 +33,37 @@ export default function CreateExpensePage() {
 
   const fetchBudgets = async () => {
     try {
-      const response = await fetch('/data/budgets.json');
-      const data = await response.json();
-      setBudgets(data.budgets);
-      if (data.budgets.length > 0) {
+      const data = await budgetService.getAll();
+      setBudgets(data);
+      if (data.length > 0) {
         setExpenseForm(prev => ({
           ...prev,
-          categoryId: data.budgets[0].id,
-          color: data.budgets[0].color
+          categoryId: data[0].id,
+          color: data[0].color
         }));
       }
-    } catch (error) {
-      console.error('Error fetching budgets:', error);
+    } catch {
+      
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Aqui você implementaria a lógica para salvar a expense
-    console.log("Saving expense:", formData);
-    router.push("/expenses");
+    setSaving(true);
+    try {
+      await expenseService.create({
+        budgetId: formData.categoryId,
+        name: formData.name,
+        amount: formData.amount,
+        description: formData.description,
+        color: formData.color,
+      });
+      router.push("/expenses");
+    } catch {
+      
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleInputChange = (field: keyof ExpenseForm, value: string | number) => {
@@ -67,7 +73,7 @@ export default function CreateExpensePage() {
     }));
   };
 
-  const handleCategoryChange = (categoryId: number) => {
+  const handleCategoryChange = (categoryId: string) => {
     const selectedBudget = budgets.find(b => b.id === categoryId);
     setExpenseForm(prev => ({
       ...prev,
@@ -142,7 +148,6 @@ export default function CreateExpensePage() {
                       </div>
                       <div>
                         <div className="font-medium text-white">{budget.name}</div>
-                        <div className="text-sm text-slate-400">{budget.category}</div>
                       </div>
                     </div>
                   </button>
@@ -204,9 +209,10 @@ export default function CreateExpensePage() {
             <div className="flex space-x-4 pt-6">
               <button
                 type="submit"
-                className="flex-1 bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-300"
+                disabled={saving}
+                className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-red-800 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-300"
               >
-                Create Expense
+                {saving ? 'Saving...' : 'Create Expense'}
               </button>
               <Link
                 href="/expenses"

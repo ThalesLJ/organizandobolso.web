@@ -1,21 +1,10 @@
 import { memo } from 'react';
 import IconRenderer from './IconRenderer';
+import { Expense, Budget } from '@/types';
 
 interface ExpenseCardProps {
-  expense: {
-    id: number;
-    categoryId: number;
-    name: string;
-    amount: number;
-    description: string;
-    color: string;
-  };
-  category?: {
-    id: number;
-    name: string;
-    icon: string;
-    color: string;
-  };
+  expense: Expense;
+  category?: Budget;
   onEdit?: () => void;
   onDelete?: () => void;
   className?: string;

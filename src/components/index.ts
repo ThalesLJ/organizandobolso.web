@@ -5,3 +5,5 @@ export { default as ErrorDisplay } from './ErrorDisplay';
 export { default as BudgetCard } from './BudgetCard';
 export { default as ExpenseCard } from './ExpenseCard';
 export { default as ChartComponent } from './ChartComponent';
+export { default as AuthGuard } from './AuthGuard';
+export { default as IconPicker } from './IconPicker';

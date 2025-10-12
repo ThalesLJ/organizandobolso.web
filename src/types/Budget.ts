@@ -1,8 +1,9 @@
 export interface Budget {
-  id: number;
-  category: string;
+  id: string;
   name: string;
+  amount: number;
   icon: string;
-  monthlyBudget: number;
   color: string;
+  createdAt: string;
+  updatedAt: string;
 }

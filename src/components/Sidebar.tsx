@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { startTransition } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useAuth } from '@/hooks/useAuth';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -10,6 +12,13 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    startTransition(() => router.push('/login'));
+  };
 
   const menuItems = [
     {
@@ -32,6 +41,7 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
     }
   ];
 
+
   return (
     <>
       <button
@@ -53,7 +63,6 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
         <div className="p-6">
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-white mb-2 select-none">Organizando Bolso</h2>
-            <p className="text-slate-400 select-none">Financial Management Dashboard</p>
           </div>
           
           <nav className="space-y-4">
@@ -63,6 +72,7 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
                 <Link
                   key={item.href}
                   href={item.href}
+                  prefetch={false}
                   className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${
                     isActive ? 'bg-white/5' : 'hover:bg-white/5'
                   }`}
@@ -77,12 +87,15 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
           </nav>
           
           <div className="mt-auto pt-6">
-            <Link href="/" className="flex items-center space-x-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-red-400">
+            <button 
+              onClick={handleLogout}
+              className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-red-400"
+            >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
               </svg>
               <span className="select-none">Logout</span>
-            </Link>
+            </button>
           </div>
         </div>
       </div>

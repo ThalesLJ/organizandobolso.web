@@ -9,5 +9,5 @@ export interface FinancialData {
   totalSpent: number;
   totalRemaining: number;
   budgetStats: BudgetStats[];
-  expensesByCategory: { [key: number]: { category: Budget; expenses: Expense[] } };
+  expensesByCategory: { [key: string]: { category: Budget; expenses: Expense[] } };
 }

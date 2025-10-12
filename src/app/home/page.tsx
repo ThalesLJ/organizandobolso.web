@@ -2,6 +2,7 @@
 
 import { lazy, Suspense } from 'react';
 import Sidebar from '@/components/Sidebar';
+import AuthGuard from '@/components/AuthGuard';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import ErrorDisplay from '@/components/ErrorDisplay';
 import BudgetCard from '@/components/BudgetCard';
@@ -25,18 +26,20 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-black">
-      <Sidebar isOpen={isOpen} onToggle={toggle} />
+    <AuthGuard>
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-black">
+        <Sidebar isOpen={isOpen} onToggle={toggle} />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-8">
-        <SummaryCards data={data} />
-        <BudgetOverview budgetStats={data.budgetStats} />
-        <ExpensesByCategory data={data} />
-        <ChartSection chartData={chartData} />
-        
-        <div className="h-16"></div>
-      </main>
-    </div>
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-8">
+          <SummaryCards data={data} />
+          <BudgetOverview budgetStats={data.budgetStats} />
+          <ExpensesByCategory data={data} />
+          <ChartSection chartData={chartData} />
+          
+          <div className="h-16"></div>
+        </main>
+      </div>
+    </AuthGuard>
   );
 }
 

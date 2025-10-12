@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Budget, Expense, BudgetStats, FinancialData, ChartDataItem } from '@/types';
+import { budgetService } from '@/services/budgetService';
+import { expenseService } from '@/services/expenseService';
 
 export function useFinancialData() {
   const [data, setData] = useState<FinancialData | null>(null);
@@ -11,23 +13,16 @@ export function useFinancialData() {
       setLoading(true);
       setError(null);
       
-      const [budgetsResponse, expensesResponse] = await Promise.all([
-        fetch('/data/budgets.json'),
-        fetch('/data/expenses.json')
+      const [budgets, expenses] = await Promise.all([
+        budgetService.getAll(),
+        expenseService.getAll()
       ]);
 
-      if (!budgetsResponse.ok || !expensesResponse.ok) {
-        throw new Error('Failed to fetch data');
-      }
-
-      const budgets = await budgetsResponse.json();
-      const expenses = await expensesResponse.json();
-
-      const budgetStats = budgets.budgets.map((budget: Budget) => {
-        const categoryExpenses = expenses.expenses.filter((expense: Expense) => expense.categoryId === budget.id);
+      const budgetStats = budgets.map((budget: Budget) => {
+        const categoryExpenses = expenses.filter((expense: Expense) => expense.budgetId === budget.id);
         const spent = categoryExpenses.reduce((sum: number, expense: Expense) => sum + expense.amount, 0);
-        const remaining = budget.monthlyBudget - spent;
-        const percentageUsed = budget.monthlyBudget > 0 ? (spent / budget.monthlyBudget) * 100 : 0;
+        const remaining = budget.amount - spent;
+        const percentageUsed = budget.amount > 0 ? (spent / budget.amount) * 100 : 0;
         
         return {
           ...budget,
@@ -37,12 +32,12 @@ export function useFinancialData() {
         };
       });
 
-      const totalBudget = budgets.budgets.reduce((sum: number, budget: Budget) => sum + budget.monthlyBudget, 0);
+      const totalBudget = budgets.reduce((sum: number, budget: Budget) => sum + budget.amount, 0);
       const totalSpent = budgetStats.reduce((sum: number, budget: BudgetStats) => sum + budget.spent, 0);
       const totalRemaining = totalBudget - totalSpent;
 
-      const expensesByCategory = expenses.expenses.reduce((acc: { [key: number]: { category: Budget; expenses: Expense[] } }, expense: Expense) => {
-        const budget = budgets.budgets.find((b: Budget) => b.id === expense.categoryId);
+      const expensesByCategory = expenses.reduce((acc: { [key: string]: { category: Budget; expenses: Expense[] } }, expense: Expense) => {
+        const budget = budgets.find((b: Budget) => b.id === expense.budgetId);
         if (budget) {
           if (!acc[budget.id]) {
             acc[budget.id] = {
@@ -56,8 +51,8 @@ export function useFinancialData() {
       }, {});
 
       setData({
-        budgets: budgets.budgets,
-        expenses: expenses.expenses,
+        budgets,
+        expenses,
         totalBudget,
         totalSpent,
         totalRemaining,
@@ -83,7 +78,21 @@ export function useFinancialData() {
   }, [data]);
 
   useEffect(() => {
-    fetchData();
+    let isMounted = true;
+    let raf1 = 0;
+    let raf2 = 0;
+    raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => {
+        if (isMounted) {
+          fetchData();
+        }
+      });
+    });
+    return () => {
+      isMounted = false;
+      if (raf1) cancelAnimationFrame(raf1);
+      if (raf2) cancelAnimationFrame(raf2);
+    };
   }, [fetchData]);
 
   const refetch = useCallback(() => {
