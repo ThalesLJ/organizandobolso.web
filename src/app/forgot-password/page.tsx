@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
 
-type Step = 'email' | 'code' | 'reset';
+type Step = 'email' | 'reset';
 
 export default function ForgotPasswordPage() {
   const [step, setStep] = useState<Step>('email');
@@ -32,20 +32,38 @@ export default function ForgotPasswordPage() {
     setSubmitting(true);
     setError(null);
     try {
-      await new Promise(r => setTimeout(r, 600));
-      setStep('code');
+      const resp = await fetch('/api/auth/send-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      if (!resp.ok) {
+        throw new Error('Failed to send code');
+      }
+      setStep('reset');
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleVerifyCode = async () => {
-    if (!codeValid || submitting) return;
+  const handleVerifyAndReset = async () => {
+    if (!codeValid || !passwordsValid || submitting) return;
     setSubmitting(true);
     setError(null);
     try {
-      await new Promise(r => setTimeout(r, 600));
-      setStep('reset');
+      const resp = await fetch('/api/auth/verify-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, password }),
+      });
+      if (!resp.ok) {
+        throw new Error('Verification failed');
+      }
+      window.location.href = '/login';
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Verification failed');
+      setSubmitting(false);
+      return;
     } finally {
       setSubmitting(false);
     }
@@ -64,7 +82,7 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-black flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-black flex items-start justify-center px-4 pt-48 pb-4">
       <div className="max-w-md w-full">
         <div className="text-center mb-10">
           <h1 className="text-4xl font-bold text-white mb-3 tracking-tight">
@@ -120,7 +138,7 @@ export default function ForgotPasswordPage() {
             </div>
           )}
 
-          {step === 'code' && (
+          {step === 'reset' && (
             <div className="space-y-6">
               <div>
                 <label htmlFor="code" className="block text-sm font-medium text-slate-300 mb-3">
@@ -141,33 +159,6 @@ export default function ForgotPasswordPage() {
                 />
               </div>
 
-              <div className="text-sm text-slate-400">
-                <span>Didn&apos;t receive it? </span>
-                <button
-                  type="button"
-                  onClick={handleSendCode}
-                  disabled={submitting}
-                  className="text-purple-400 hover:text-purple-300 font-medium"
-                >
-                  Resend
-                </button>
-              </div>
-
-              {error && <p className="text-sm text-red-400">{error}</p>}
-
-              <button
-                type="button"
-                onClick={handleVerifyCode}
-                disabled={!codeValid || submitting}
-                className="w-full flex justify-center py-4 px-6 border border-transparent rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-purple-600 via-purple-700 to-purple-800 hover:from-purple-700 hover:via-purple-800 hover:to-purple-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500/50 transition-all duration-300 transform hover:scale-[1.02] shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {submitting ? 'Verifying...' : 'Verify code'}
-              </button>
-            </div>
-          )}
-
-          {step === 'reset' && (
-            <div className="space-y-6">
               <div>
                 <label htmlFor="password" className="block text-sm font-medium text-slate-300 mb-3">
                   New Password
@@ -208,8 +199,8 @@ export default function ForgotPasswordPage() {
 
               <button
                 type="button"
-                onClick={handleResetPassword}
-                disabled={!passwordsValid || submitting}
+                onClick={handleVerifyAndReset}
+                disabled={!passwordsValid || !codeValid || submitting}
                 className="w-full flex justify-center py-4 px-6 border border-transparent rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-purple-600 via-purple-700 to-purple-800 hover:from-purple-700 hover:via-purple-800 hover:to-purple-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500/50 transition-all duration-300 transform hover:scale-[1.02] shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {submitting ? 'Saving...' : 'Save new password'}

@@ -36,8 +36,7 @@ export function useAuth() {
       }, 100);
       return response;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Login failed';
-      setError(errorMessage);
+      setError('Login failed');
       throw err;
     } finally {
       setLoading(false);
@@ -56,8 +55,7 @@ export function useAuth() {
       }, 100);
       return response;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Registration failed';
-      setError(errorMessage);
+      setError('Registration failed');
       throw err;
     } finally {
       setLoading(false);

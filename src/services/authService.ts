@@ -8,9 +8,13 @@ export const authService = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(credentials),
-    }).then(r => r.json());
-    setTokenInStorage(response.token);
-    return response;
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data?.message || 'Login failed');
+    }
+    setTokenInStorage(data.token);
+    return data;
   },
 
   async register(userData: RegisterRequest): Promise<AuthResponse> {
@@ -18,9 +22,13 @@ export const authService = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(userData),
-    }).then(r => r.json());
-    setTokenInStorage(response.token);
-    return response;
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data?.message || 'Registration failed');
+    }
+    setTokenInStorage(data.token);
+    return data;
   },
 
   logout(): void {
