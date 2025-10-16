@@ -1,6 +1,5 @@
 "use client";
 
-import { lazy, Suspense } from 'react';
 import Sidebar from '@/components/Sidebar';
 import AuthGuard from '@/components/AuthGuard';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -11,10 +10,8 @@ import { useFinancialData } from '@/hooks/useFinancialData';
 import { useSidebar } from '@/hooks/useSidebar';
 import { FinancialData, BudgetStats, Budget, Expense } from '@/types';
 
-const ChartComponent = lazy(() => import('@/components/ChartComponent'));
-
 export default function HomePage() {
-  const { data, loading, error, chartData, refetch } = useFinancialData();
+  const { data, loading, error, refetch } = useFinancialData();
   const { isOpen, toggle } = useSidebar();
 
   if (loading) {
@@ -34,8 +31,6 @@ export default function HomePage() {
           <SummaryCards data={data} />
           <BudgetOverview budgetStats={data.budgetStats} />
           <ExpensesByCategory data={data} />
-          <ChartSection chartData={chartData} />
-          
           <div className="h-16"></div>
         </main>
       </div>
@@ -108,14 +103,3 @@ function ExpensesByCategory({ data }: { data: FinancialData }) {
   );
 }
 
-function ChartSection({ chartData }: { chartData: import('@/types').ChartDataItem[] }) {
-  return (
-    <div className="mb-12">
-      <h3 className="text-xl font-semibold text-white mb-6 tracking-tight text-center select-none">Financial Analytics</h3>
-      
-      <Suspense fallback={<LoadingSpinner message="Loading chart..." className="h-80" />}>
-        <ChartComponent chartData={chartData} />
-      </Suspense>
-    </div>
-  );
-}

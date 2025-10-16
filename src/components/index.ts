@@ -7,3 +7,4 @@ export { default as ExpenseCard } from './ExpenseCard';
 export { default as ChartComponent } from './ChartComponent';
 export { default as AuthGuard } from './AuthGuard';
 export { default as IconPicker } from './IconPicker';
+export { default as SocialLinks } from './SocialLinks';

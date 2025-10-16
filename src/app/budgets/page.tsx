@@ -20,7 +20,7 @@ export default function BudgetsPage() {
   };
 
   const handleDelete = async (budgetId: string) => {
-    if (confirm('Tem certeza que deseja excluir este orçamento?')) {
+    if (confirm('Are you sure you want to delete this budget?')) {
       try {
         await deleteBudget(budgetId);
       } catch {

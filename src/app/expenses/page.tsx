@@ -26,7 +26,7 @@ export default function ExpensesPage() {
   };
 
   const handleDelete = async (expenseId: string) => {
-    if (confirm('Tem certeza que deseja excluir esta despesa?')) {
+    if (confirm('Are you sure you want to delete this expense?')) {
       try {
         await deleteExpense(expenseId);
       } catch {

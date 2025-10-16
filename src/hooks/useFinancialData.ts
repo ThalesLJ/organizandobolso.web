@@ -81,17 +81,20 @@ export function useFinancialData() {
     let isMounted = true;
     let raf1 = 0;
     let raf2 = 0;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
     raf1 = requestAnimationFrame(() => {
       raf2 = requestAnimationFrame(() => {
-        if (isMounted) {
-          fetchData();
-        }
+        if (!isMounted) return;
+        timeoutId = setTimeout(() => {
+          if (isMounted) fetchData();
+        }, 1000);
       });
     });
     return () => {
       isMounted = false;
       if (raf1) cancelAnimationFrame(raf1);
       if (raf2) cancelAnimationFrame(raf2);
+      if (timeoutId) clearTimeout(timeoutId);
     };
   }, [fetchData]);
 

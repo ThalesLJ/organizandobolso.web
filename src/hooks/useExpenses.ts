@@ -64,17 +64,20 @@ export function useExpenses() {
     let isMounted = true;
     let raf1 = 0;
     let raf2 = 0;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
     raf1 = requestAnimationFrame(() => {
       raf2 = requestAnimationFrame(() => {
-        if (isMounted) {
-          fetchExpenses();
-        }
+        if (!isMounted) return;
+        timeoutId = setTimeout(() => {
+          if (isMounted) fetchExpenses();
+        }, 1000);
       });
     });
     return () => {
       isMounted = false;
       if (raf1) cancelAnimationFrame(raf1);
       if (raf2) cancelAnimationFrame(raf2);
+      if (timeoutId) clearTimeout(timeoutId);
     };
   }, [fetchExpenses]);
 

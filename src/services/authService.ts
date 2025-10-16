@@ -1,33 +1,30 @@
-import { apiAuthRequest } from '@/lib/api';
+ 
 import { LoginRequest, RegisterRequest, AuthResponse } from '@/types';
 import { setTokenInStorage, removeTokenFromStorage } from '@/lib/auth';
 
 export const authService = {
   async login(credentials: LoginRequest): Promise<AuthResponse> {
-    const response = await apiAuthRequest<AuthResponse>('/api/auth/login', {
+    const response = await fetch('/api/session/login', {
       method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(credentials),
-    });
+    }).then(r => r.json());
     setTokenInStorage(response.token);
-    // Also set cookie for middleware
-    document.cookie = `token=${response.token}; path=/; max-age=${7 * 24 * 60 * 60}; secure; samesite=strict`;
     return response;
   },
 
   async register(userData: RegisterRequest): Promise<AuthResponse> {
-    const response = await apiAuthRequest<AuthResponse>('/api/auth/register', {
+    const response = await fetch('/api/session/register', {
       method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(userData),
-    });
+    }).then(r => r.json());
     setTokenInStorage(response.token);
-    // Also set cookie for middleware
-    document.cookie = `token=${response.token}; path=/; max-age=${7 * 24 * 60 * 60}; secure; samesite=strict`;
     return response;
   },
 
   logout(): void {
     removeTokenFromStorage();
-    // Also remove cookie
-    document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    fetch('/api/session/logout', { method: 'POST' });
   },
 };
